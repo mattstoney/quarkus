@@ -835,8 +835,15 @@ public final class RunTimeConfigurationGenerator {
             // generate sweep for clinit
             configSweepLoop(siParserBody, clinit, clinitConfig, getRegisteredRoots(BUILD_AND_RUN_TIME_FIXED));
 
-            clinit.invokeStaticMethod(CD_UNKNOWN_PROPERTIES,
-                    clinit.readStaticField(FieldDescriptor.of(cc.getClassName(), "unused", List.class)));
+            final var unused = clinit.readStaticField(FieldDescriptor.of(cc.getClassName(), "unused", List.class));
+            final var unusedRuntime = readConfig.readStaticField(FieldDescriptor.of(cc.getClassName(), "unusedRuntime", List.class));
+
+            if (buildTimeRunTimeVisibleValues.get("quarkus.config.unused").equals("fail")
+                    && (!((List<String>) unused.getConstant()).isEmpty() || !((List<String>) unusedRuntime.getConstant()).isEmpty())) {
+                throw new RuntimeException("unused configs provided");
+            }
+
+            clinit.invokeStaticMethod(CD_UNKNOWN_PROPERTIES, unused);
 
             if (liveReloadPossible) {
                 configSweepLoop(siParserBody, readConfig, runTimeConfig, getRegisteredRoots(RUN_TIME));
@@ -844,8 +851,7 @@ public final class RunTimeConfigurationGenerator {
             // generate sweep for run time
             configSweepLoop(rtParserBody, readConfig, runTimeConfig, getRegisteredRoots(RUN_TIME));
 
-            readConfig.invokeStaticMethod(CD_UNKNOWN_PROPERTIES_RT,
-                    readConfig.readStaticField(FieldDescriptor.of(cc.getClassName(), "unusedRuntime", List.class)));
+            readConfig.invokeStaticMethod(CD_UNKNOWN_PROPERTIES_RT, unusedRuntime);
 
             if (bootstrapConfigSetupNeeded()) {
                 // generate sweep for bootstrap config
