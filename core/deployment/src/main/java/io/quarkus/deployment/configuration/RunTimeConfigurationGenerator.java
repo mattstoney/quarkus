@@ -838,7 +838,7 @@ public final class RunTimeConfigurationGenerator {
             final var unused = clinit.readStaticField(FieldDescriptor.of(cc.getClassName(), "unused", List.class));
             final var unusedRuntime = readConfig.readStaticField(FieldDescriptor.of(cc.getClassName(), "unusedRuntime", List.class));
 
-            if (buildTimeRunTimeVisibleValues.get("quarkus.config.unused").equals("fail")
+            if ("fail".equals(buildTimeRunTimeVisibleValues.get("quarkus.config.unused"))
                     && (!((List<String>) unused.getConstant()).isEmpty() || !((List<String>) unusedRuntime.getConstant()).isEmpty())) {
                 throw new RuntimeException("unused configs provided");
             }
